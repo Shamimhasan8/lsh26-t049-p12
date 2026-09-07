@@ -1,0 +1,77 @@
+{
+  "team_id": "LSH26-T049",
+  "problem_id": "P12",
+  "repository_name": "lsh26-t049-p12",
+  "live_url": "https://preview-db913ad5-c63b-4e0a-ab0d-cc2b467ebc79.space-z.ai/",
+  "demo_video_url_optional": "",
+  "event_start_code": "LSH26-8490-C900",
+  "repository_created_before_release": false,
+  "pre_event_materials": [],
+  "sample_data": {
+    "loads_published_fixture": true,
+    "method": "file upload",
+    "reset_instructions": "Open the app, pick any of PUB-01..PUB-25 in the header dropdown, or use 'Load case JSON' / 'Paste JSON' for a single case object or a whole fixture file (first case loads). Press 'Reset' to restore the pristine published case and discard all OCR-captured rows. All 25 public cases are also bundled at fixtures/P12_personal_ledger_public.json."
+  },
+  "problem_solving_method": "We pinned the four deliverables from the case format (ledger, OCR review flow, forecast, pockets) and engineered for exactness: all money is integer paisa, and the DPS rule (deposit, then interest on the whole balance, rounded half up to the paisa, compounding into the balance) is implemented as pure integer division, verified against an independent Python Decimal ROUND_HALF_UP reference across all 25 public cases (month totals, category totals, full schedules, maturity, interest — all pass). OCR uses a server-side vision model whose output is only a suggestion: a mandatory review form (human confirms/edits every field) gates what enters the ledger. Forecasts are per-category with a documented lumpy-vs-variable full-month-equivalent rule and three auditable methods (trend/steady/repeat-last). An Audit tab exposes validation results and a downloadable calculation trace so judges can re-verify every number offline.",
+  "requirements": {
+    "R1": {
+      "status": "complete",
+      "evidence": "Ledger tab ('/' route): KPI cards, last-vs-this month category table, daily-spend chart, top shops, expense register with month filters. Engine: src/lib/p12/engine.ts (analyze) + src/lib/p12/money.ts (exact paisa parsing/formatting). Case loading: header dropdown (25 bundled public cases), file upload, paste JSON; validation with hard errors vs warnings."
+    },
+    "R2": {
+      "status": "complete",
+      "evidence": "Capture (OCR) tab: image upload/drag-drop/paste -> POST src/app/api/ocr/route.ts (server-side vision model via z-ai-web-dev-sdk) -> editable review form (shop, date<=today, amount, category from the case's category set) with confidence, model notes, raw JSON disclosure and per-field validation -> 'Confirm & add to ledger' appends a source-tagged row (id continues fixture numbering). Ledger/forecast/pockets recompute instantly. Graceful manual-entry fallback if OCR is unavailable."
+    },
+    "R3": {
+      "status": "complete",
+      "evidence": "Forecast tab: next-month per-category forecast with three auditable methods (Trend/Steady/Repeat-last), full-month-equivalent column, lumpy-vs-variable rule documented on-page, projected savings and savings rate; method also drives pocket affordability. Engine: forecastNextMonth() in src/lib/p12/engine.ts. Additions via OCR recompute the forecast immediately."
+    },
+    "R4": {
+      "status": "complete",
+      "evidence": "Pockets tab: per-pocket months-to-goal, completion month, total deposited, DPS interest earned, expandable month-by-month schedule (opening/deposit/interest half-up/closing), affordability banner (planned contributions vs forecast capacity), DPS rule quoted from the case. Engine: projectPockets() + dpsMonth() in src/lib/p12/engine.ts and src/lib/p12/money.ts (integer half-up paisa rounding). Cross-verified by scripts/verify-engine.py against Python Decimal for all 25 public cases."
+    }
+  },
+  "team_members": [
+    {
+      "registered_name": "Adil Shamim",
+      "github_username": "AdilShamim8",
+      "major_contribution": "Team lead: deterministic paisa engine + DPS simulation design, OCR review flow and API route, verification harness, submission documentation",
+      "evidence_paths_or_commits": [
+        "src/lib/p12/engine.ts",
+        "src/lib/p12/money.ts",
+        "src/app/api/ocr/route.ts",
+        "src/components/p12/capture-view.tsx",
+        "scripts/verify-engine.py"
+      ]
+    }
+  ],
+  "major_design_decisions": [
+    "Integer paisa for all money: eliminates float drift; DPS half-up rounding becomes exact integer division divRoundHalfUp(balance x rateMilli, 1200000), mathematically identical to the case rule.",
+    "Case-date semantics: the app uses the case's own today/months fields, never the wall clock, so any judge-supplied case reproduces identical numbers anywhere.",
+    "Human-in-the-loop OCR: the vision model's JSON is displayed raw and must pass an editable review form with validation before a row is added; the model can never write to the ledger directly.",
+    "Per-category forecasting with a documented lumpy-vs-variable rule (<=2 txns and this>=last -> max(this,last); else prorated by days) so fixed commitments like rent are not inflated by daily-rate extrapolation.",
+    "Stateless deployment: no database; per-browser localStorage persistence plus byte-exact reset from the bundled fixture keeps judging simple and reproducible.",
+    "Auditability as a feature: validation report, full calculation trace and JSON exports (updated case, trace, validation) let judges re-verify every displayed number offline."
+  ],
+  "known_limitations": [
+    "Forecast methods are transparent heuristics; the lumpy-vs-variable rule uses a <=2-transactions heuristic that can misclassify an unusually quiet variable category.",
+    "Pocket projections start from balance 0 (the case schema has no opening balances) and assume the fixed monthly contribution continues from months.this.",
+    "OCR accepts images only and summarises receipts to the grand total with at most 5 itemised lines.",
+    "DPS simulation is capped at 600 months; a pocket with 0 contribution is reported unreachable rather than simulated indefinitely.",
+    "Persistence is per-browser (localStorage); clearing site data returns to the pristine fixture."
+  ],
+  "ai_tools_used": [
+    {
+      "tool": "GLM vision model via z-ai-web-dev-sdk (server-side, /api/ocr)",
+      "used_for": "Receipt OCR field extraction only: shop, date, grand total, category, items, confidence. Output is treated as a suggestion and gated by a mandatory human review form before entering the ledger.",
+      "how_output_was_verified": "Synthetic-receipt test (scripts/test-receipt.png) asserting exact shop, date, VAT-inclusive total (1,485.75), category Groceries and item lines; review-form validation rejects malformed dates/amounts; raw model JSON is shown in the UI for transparency."
+    },
+    {
+      "tool": "Z.ai GLM AI coding assistant",
+      "used_for": "Scaffolding and code generation during the event window (UI components, engine implementation assistance), disclosed per event rules.",
+      "how_output_was_verified": "Team reviewed and tested all logic; the deterministic engine was additionally cross-verified against an independent Python Decimal ROUND_HALF_UP reference implementation across all 25 public cases (scripts/verify-engine.py) with zero mismatches."
+    }
+  ],
+  "licenses_file": "LICENSES.md",
+  "declaration": "The information above is complete and truthful to the best of the team's knowledge."
+}

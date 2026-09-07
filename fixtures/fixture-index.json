@@ -1,0 +1,55 @@
+{
+  "release_version": "2.2",
+  "problem_ids": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "P07",
+    "P08",
+    "P09",
+    "P10",
+    "P11",
+    "P12"
+  ],
+  "public_files": {
+    "P01": [
+      "P01_load_shedding_public.json"
+    ],
+    "P02": [
+      "P02_pharmacy_expiry_public.json"
+    ],
+    "P03": [
+      "P03_rider_handover_public.json"
+    ],
+    "P04": [
+      "P04_fare_split_public.json"
+    ],
+    "P05": [
+      "P05_micro_loans_public.json"
+    ],
+    "P06": [
+      "P06_client_digest_public.json"
+    ],
+    "P07": [
+      "P07_reconciliation_public.json"
+    ],
+    "P08": [
+      "P08_school_results_public.json"
+    ],
+    "P09": [
+      "P09_vehicle_service_public.json"
+    ],
+    "P10": [
+      "P10_prepaid_meter_public.json"
+    ],
+    "P11": [
+      "P11_route_shift_public.json"
+    ],
+    "P12": [
+      "P12_personal_ledger_public.json"
+    ]
+  }
+}

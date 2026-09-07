@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Single-row settings table (id = 1) for the monthly salary.
+model Settings {
+  id            Int      @id @default(1)
+  monthlySalary Int      @default(45000) // stored in integer paisa (100 paisa = 1 BDT)
+  updatedAt     DateTime @updatedAt
+}
+
+// One expense record. Amounts are integer paisa to keep money math exact.
+model Expense {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  shop        String
+  category    String
+  amountPaisa Int
+  source      String   @default("manual") // "manual" | "receipt"
+  confidence  Float? // average OCR confidence 0..1 when source = receipt
+  createdAt   DateTime @default(now())
+}
+
+// A savings pocket. dpsRate is annual %, compounded monthly.
+model Pocket {
+  id                      Int      @id @default(autoincrement())
+  name                    String
+  itemDetails             String   @default("")
+  targetPaisa             Int
+  savedPaisa              Int      @default(0)
+  monthlyContributionPaisa Int
+  dpsRate                 Float    @default(9.5)
+  createdAt               DateTime @default(now())
+}
